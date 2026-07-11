@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repaso ICC — Introducción a la Ciencia de la Computación</title>
+<style>
+  :root{
+    --bg: #0b0f14;
+    --bg-panel: #10161d;
+    --bg-card: #141c25;
+    --line: #22303c;
+    --ink: #e8eef2;
+    --ink-dim: #93a4b0;
+    --accent: #35e0a4;
+    --accent-dim: #1c8f68;
+    --amber: #ffb454;
+    --red: #ff6b6b;
+    --mono: "IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+    --serif: "Fraunces","Georgia",serif;
+    --sans: "Inter","Helvetica Neue",Arial,sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 60% 40% at 15% -10%, rgba(53,224,164,0.10), transparent),
+      radial-gradient(ellipse 50% 30% at 100% 0%, rgba(255,180,84,0.06), transparent),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+
+  .scan{
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.035;
+    background-image: repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 3px);
+  }
+
+  header.hero{
+    position:relative; z-index:1;
+    padding:56px 24px 40px;
+    border-bottom:1px solid var(--line);
+    max-width:1040px; margin:0 auto;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:"$"; color:var(--ink-dim);}
+  .cursor{display:inline-block; width:8px; height:14px; background:var(--accent); animation:blink 1.1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  h1.title{
+    font-family:var(--serif); font-weight:600; font-size:clamp(34px,5.4vw,58px);
+    line-height:1.04; margin:0 0 14px; letter-spacing:-0.01em;
+  }
+  h1.title em{ font-style:italic; color:var(--accent); font-weight:400;}
+  .sub{
+    color:var(--ink-dim); font-size:16px; max-width:620px; line-height:1.55; margin-bottom:26px;
+  }
+  .meta-row{ display:flex; gap:10px; flex-wrap:wrap; font-family:var(--mono); font-size:12.5px; }
+  .chip{
+    border:1px solid var(--line); padding:6px 12px; border-radius:20px; color:var(--ink-dim);
+    background:var(--bg-panel);
+  }
+  .chip b{color:var(--ink); font-weight:600;}
+
+  nav.tabs{
+    position:sticky; top:0; z-index:5;
+    display:flex; gap:0; max-width:1040px; margin:0 auto;
+    background:rgba(11,15,20,0.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  nav.tabs button{
+    flex:1; padding:16px 10px; background:none; border:none; cursor:pointer;
+    font-family:var(--mono); font-size:13px; letter-spacing:0.04em; color:var(--ink-dim);
+    border-bottom:2px solid transparent; transition:all .15s ease;
+  }
+  nav.tabs button:hover{ color:var(--ink); }
+  nav.tabs button.active{ color:var(--accent); border-bottom-color:var(--accent); }
+
+  main{ max-width:1040px; margin:0 auto; padding:36px 24px 100px; position:relative; z-index:1; }
+  section.view{ display:none; }
+  section.view.active{ display:block; animation:fadeUp .35s ease; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- RESUMENES ---------- */
+  .chapter-nav{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
+  .chapter-nav button{
+    font-family:var(--mono); font-size:12px; padding:7px 11px; border-radius:6px;
+    border:1px solid var(--line); background:var(--bg-panel); color:var(--ink-dim); cursor:pointer;
+  }
+  .chapter-nav button.active{ border-color:var(--accent); color:var(--accent); background:rgba(53,224,164,0.08); }
+
+  .chap-card{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:12px;
+    padding:32px; display:none;
+  }
+  .chap-card.active{ display:block; }
+  .chap-num{
+    font-family:var(--mono); color:var(--accent); font-size:13px; letter-spacing:0.1em;
+  }
+  .chap-card h2{
+    font-family:var(--serif); font-size:28px; margin:8px 0 22px; font-weight:600;
+  }
+  .chap-card ul{ margin:0; padding:0; list-style:none; }
+  .chap-card li{
+    position:relative; padding:12px 0 12px 28px; border-top:1px solid var(--line); line-height:1.6; color:#dbe4ea;
+    font-size:15.5px;
+  }
+  .chap-card li:first-child{ border-top:none; }
+  .chap-card li::before{
+    content:"▸"; position:absolute; left:0; top:12px; color:var(--accent);
+  }
+
+  /* ---------- FLASHCARDS ---------- */
+  .fc-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;}
+  .fc-progress{ font-family:var(--mono); font-size:13px; color:var(--ink-dim); }
+  select#fc-chapter{
+    background:var(--bg-panel); color:var(--ink); border:1px solid var(--line); border-radius:6px;
+    padding:8px 10px; font-family:var(--mono); font-size:12.5px;
+  }
+  .fc-stage{ display:flex; justify-content:center; margin:20px 0 26px; perspective:1400px; }
+  .flip-card{
+    width:100%; max-width:560px; height:300px; position:relative; cursor:pointer;
+  }
+  .flip-inner{
+    width:100%; height:100%; position:relative; transition:transform .5s cubic-bezier(.4,.2,.2,1);
+    transform-style:preserve-3d;
+  }
+  .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden; border-radius:14px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:36px; border:1px solid var(--line);
+  }
+  .face.front{
+    background:linear-gradient(160deg,#141c25,#0f151c);
+  }
+  .face.front .tag{
+    position:absolute; top:18px; left:20px; font-family:var(--mono); font-size:11px; color:var(--accent); letter-spacing:.08em;
+  }
+  .face.front p{ font-family:var(--serif); font-size:22px; font-weight:600; line-height:1.35; }
+  .face.back{
+    background:linear-gradient(160deg,#123024,#0d1a15); transform:rotateY(180deg);
+    color:#c9f5e2; font-size:16.5px; line-height:1.55;
+  }
+  .hint{ text-align:center; font-family:var(--mono); font-size:11.5px; color:var(--ink-dim); margin-top:-10px; margin-bottom:22px;}
+
+  .fc-controls{ display:flex; gap:10px; justify-content:center; }
+  .btn{
+    font-family:var(--mono); font-size:13px; padding:11px 20px; border-radius:8px; border:1px solid var(--line);
+    background:var(--bg-panel); color:var(--ink); cursor:pointer; transition:.15s;
+  }
+  .btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#06140f; font-weight:600; }
+  .btn.primary:hover{ opacity:.88; color:#06140f; }
+  .btn.ghost{ background:none; }
+
+  /* ---------- QUIZ ---------- */
+  .quiz-setup{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:34px;
+    text-align:center;
+  }
+  .quiz-setup h2{ font-family:var(--serif); font-size:26px; margin:0 0 10px;}
+  .quiz-setup p{ color:var(--ink-dim); max-width:480px; margin:0 auto 24px; line-height:1.55;}
+  .quiz-opts{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:22px;}
+  .quiz-opts label{
+    font-family:var(--mono); font-size:12.5px; border:1px solid var(--line); padding:8px 14px; border-radius:20px;
+    cursor:pointer; color:var(--ink-dim);
+  }
+  .quiz-opts input{ display:none; }
+  .quiz-opts input:checked + span{ color:var(--accent); }
+  .quiz-opts label:has(input:checked){ border-color:var(--accent); background:rgba(53,224,164,.08);}
+
+  #quiz-active{ display:none; }
+  .qz-bar{
+    height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-bottom:20px;
+  }
+  .qz-bar-fill{ height:100%; background:var(--accent); width:0%; transition:width .3s; }
+  .qz-head{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:12.5px; color:var(--ink-dim); margin-bottom:16px;}
+  .qz-card{ background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:30px; }
+  .qz-chap-tag{ font-family:var(--mono); font-size:11.5px; color:var(--accent); letter-spacing:.08em; margin-bottom:10px; display:block;}
+  .qz-question{ font-family:var(--serif); font-size:21px; line-height:1.4; margin:0 0 22px; font-weight:600;}
+  .qz-option{
+    display:block; width:100%; text-align:left; padding:14px 16px; margin-bottom:10px; border-radius:9px;
+    border:1px solid var(--line); background:var(--bg-panel); color:var(--ink); cursor:pointer; font-size:15px;
+    transition:.12s;
+  }
+  .qz-option:hover{ border-color:var(--ink-dim); }
+  .qz-option.correct{ border-color:var(--accent); background:rgba(53,224,164,.12); color:#bdf5de; }
+  .qz-option.wrong{ border-color:var(--red); background:rgba(255,107,107,.10); color:#ffcaca; }
+  .qz-option[disabled]{ cursor:default; }
+  .qz-explain{
+    margin-top:14px; padding:14px 16px; border-radius:9px; background:#0d1319; border:1px dashed var(--line);
+    font-size:14px; color:var(--ink-dim); line-height:1.5; display:none;
+  }
+  .qz-explain.show{ display:block; }
+  .qz-nav{ display:flex; justify-content:flex-end; margin-top:20px; }
+
+  #quiz-result{ display:none; text-align:center; }
+  .score-big{ font-family:var(--serif); font-size:72px; font-weight:700; color:var(--accent); margin:10px 0;}
+  .score-label{ font-family:var(--mono); color:var(--ink-dim); font-size:13px; letter-spacing:.08em;}
+  .review-list{ text-align:left; margin-top:30px; }
+  .review-item{ border-top:1px solid var(--line); padding:16px 0; }
+  .review-item .q{ font-weight:600; margin-bottom:6px; }
+  .review-item .ans{ font-size:14px; color:var(--ink-dim); }
+  .review-item .ans.bad{ color:var(--red); }
+  .review-item .ans.good{ color:var(--accent); }
+
+  footer{
+    text-align:center; padding:30px; font-family:var(--mono); font-size:11.5px; color:#4d5c68;
+    border-top:1px solid var(--line);
+  }
+
+  @media (max-width:600px){
+    .flip-card{ height:340px; }
+    .chap-card{ padding:22px; }
+    nav.tabs button{ font-size:11.5px; padding:14px 4px;}
+  }
+</style>
+</head>
+<body>
+<div class="scan"></div>
+
+<header class="hero">
+  <div class="eyebrow">repaso_final.exe<span class="cursor"></span></div>
+  <h1 class="title">Introducción a la <em>Ciencia de la Computación</em></h1>
+  <p class="sub">Guía de repaso construida a partir de las 12 unidades del curso — resúmenes, flashcards y un quiz de 105 preguntas para llegar listo al examen del lunes.</p>
+  <div class="meta-row">
+    <span class="chip"><b>12</b> capítulos</span>
+    <span class="chip"><b id="fc-total-chip">66</b> flashcards</span>
+    <span class="chip"><b>105</b> preguntas de quiz</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-view="resumen" class="active">01 — Resúmenes</button>
+  <button data-view="flash">02 — Flashcards</button>
+  <button data-view="quiz">03 — Quiz</button>
+</nav>
+
+<main>
+
+  <!-- ===================== RESUMENES ===================== -->
+  <section id="view-resumen" class="view active">
+    <div class="chapter-nav" id="chapter-nav"></div>
+    <div id="chapters-container"></div>
+  </section>
+
+  <!-- ===================== FLASHCARDS ===================== -->
+  <section id="view-flash" class="view">
+    <div class="fc-toolbar">
+      <div class="fc-progress" id="fc-progress">Tarjeta 1 / 66</div>
+      <select id="fc-chapter">
+        <option value="all">Todos los capítulos</option>
+      </select>
+    </div>
+    <div class="fc-stage">
+      <div class="flip-card" id="flip-card">
+        <div class="flip-inner">
+          <div class="face front">
+            <span class="tag" id="fc-tag">CAP. 0</span>
+            <p id="fc-front">Cargando...</p>
+          </div>
+          <div class="face back" id="fc-back">...</div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Click / tap sobre la tarjeta para voltearla</p>
+    <div class="fc-controls">
+      <button class="btn" id="fc-prev">← Anterior</button>
+      <button class="btn primary" id="fc-shuffle">🔀 Mezclar</button>
+      <button class="btn" id="fc-next">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section id="view-quiz" class="view">
+
+    <div class="quiz-setup" id="quiz-setup">
+      <h2>Quiz de práctica</h2>
+      <p>105 preguntas tipo examen cubriendo los 12 capítulos. Elige cuántas quieres responder en esta sesión (se seleccionan al azar).</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="qcount" value="20" checked><span>20 preguntas</span></label>
+        <label><input type="radio" name="qcount" value="50"><span>50 preguntas</span></label>
+        <label><input type="radio" name="qcount" value="105"><span>Las 105</span></label>
+      </div>
+      <button class="btn primary" id="quiz-start">Comenzar quiz →</button>
+    </div>
+
+    <div id="quiz-active">
+      <div class="qz-bar"><div class="qz-bar-fill" id="qz-bar-fill"></div></div>
+      <div class="qz-head">
+        <span id="qz-position">Pregunta 1 / 20</span>
+        <span id="qz-score">Aciertos: 0</span>
+      </div>
+      <div class="qz-card">
+        <span class="qz-chap-tag" id="qz-chap-tag">CAPÍTULO 0</span>
+        <p class="qz-question" id="qz-question">...</p>
+        <div id="qz-options"></div>
+        <div class="qz-explain" id="qz-explain"></div>
+      </div>
+      <div class="qz-nav">
+        <button class="btn primary" id="qz-next" disabled>Siguiente pregunta →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result">
+      <div class="score-label">RESULTADO FINAL</div>
+      <div class="score-big" id="score-big">0%</div>
+      <p id="score-detail" style="color:var(--ink-dim); font-family:var(--mono); font-size:13px;"></p>
+      <button class="btn primary" id="quiz-restart">↺ Intentar de nuevo</button>
+      <div class="review-list" id="review-list"></div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>hecho para tu examen del lunes — ánimo ✦</footer>
+
+<script id="content-data" type="application/json">
+{"chapters": [{"id": 0, "title": "Introducción a la Ciencia de la Computación", "summary": ["La Ciencia de la Computación (CS) estudia la representación, el procesamiento y la comunicación de información, no solo el uso de computadoras.", "Se apoya en Matemática (discreta y continua), Física/Ingeniería (hardware) y disciplinas de negocio/gestión (aplicación de sistemas).", "El 'binomio humano-computador': el ser humano es inteligente pero lento; la computadora es rápida (fuerza bruta) pero no es inteligente por sí misma.", "Historia clave: perceptrón (1957, primer modelo de IA), QDOS/MS-DOS (Microsoft, 1981), NCSA Mosaic (1993, primer navegador popular), ChatGPT (nov. 2022).", "La computación se divide en subáreas: Ingeniería de Software (SE), Sistemas de Información/TI (IS/IT), Ciencia de Datos, Ciberseguridad, IA, Ingeniería de Computadores.", "Un algoritmo es una secuencia finita y ordenada de pasos para resolver un problema; abstracción es ocultar detalles innecesarios para enfocarse en lo esencial.", "Ejemplo clásico de algoritmo: búsqueda binaria en una guía telefónica (dividir el problema a la mitad repetidamente) — complejidad logarítmica O(log n)."]}, {"id": 1, "title": "Almacenamiento de Datos (Data Storage)", "summary": ["Toda la información en una computadora se representa en sistema binario (bits: 0 y 1), agrupados en bytes (8 bits).", "Sistemas numéricos: decimal (base 10), binario (base 2), y su conversión mediante potencias de la base (ej. 1011 en binario = 2^3+2^1+2^0 = 11 decimal).", "Representación de texto: código ASCII (7-8 bits, caracteres básicos en inglés) y Unicode (soporta miles de caracteres y símbolos de todos los idiomas).", "Representación de imágenes: modelo de color RGB (combinación de rojo, verde y azul); mapas de bits (bitmap) vs. gráficos vectoriales.", "Representación de sonido: muestreo (sampling) de una onda analógica a intervalos regulares, convirtiéndola en valores digitales discretos.", "Circuitos y compuertas lógicas (gates): AND, OR, NOT, XOR — bloques básicos que procesan bits y forman circuitos más complejos (sumadores, flip-flops).", "Memoria principal (RAM): volátil, organizada en celdas direccionables; memoria masiva (discos, SSD): no volátil, almacenamiento permanente.", "Compresión de datos: técnicas con pérdida (lossy, ej. JPEG) y sin pérdida (lossless, ej. ZIP) para reducir el tamaño de la información."]}, {"id": 2, "title": "Manipulación de Datos (Data Manipulation)", "summary": ["La CPU (Unidad Central de Procesamiento) tiene dos partes principales: la Unidad Aritmético-Lógica (ALU) y la Unidad de Control.", "Ciclo de máquina (fetch-decode-execute): buscar la instrucción en memoria, decodificarla, y ejecutarla; luego actualizar el contador de programa.", "Lenguaje de máquina: instrucciones binarias directamente ejecutables por el hardware; cada arquitectura de CPU tiene su propio conjunto de instrucciones.", "Registros: pequeñas ubicaciones de almacenamiento de alta velocidad dentro de la CPU usadas para operaciones temporales.", "Arquitecturas de computador: modelo de von Neumann (memoria compartida para datos e instrucciones) vs. procesamiento paralelo (múltiples CPUs/núcleos).", "Comunicación con otros dispositivos: buses de datos, controladores, interrupciones (señales que pausan la CPU para atender un evento urgente).", "Operaciones lógicas y aritméticas a nivel de bits: complemento a dos para representar números negativos, desbordamiento (overflow)."]}, {"id": 3, "title": "Sistemas Operativos (Operating Systems)", "summary": ["El Sistema Operativo (SO) es el software que gestiona los recursos del hardware y sirve de intermediario entre el usuario/aplicaciones y la máquina.", "Funciones clave: gestión de procesos, gestión de memoria, gestión de archivos, gestión de dispositivos de E/S y seguridad.", "Un proceso es un programa en ejecución; tiene estados típicos: listo (ready), en ejecución (running), bloqueado (blocked) y terminado.", "Planificación (scheduling): algoritmos que deciden qué proceso usa la CPU (ej. Round Robin, FCFS, prioridades) para dar la ilusión de multitarea.", "Concurrencia y sincronización: manejo de la 'competencia' entre procesos por recursos compartidos; problemas clásicos como el interbloqueo (deadlock).", "Gestión de memoria: memoria virtual, paginación y segmentación permiten ejecutar programas más grandes que la memoria física disponible.", "Seguridad del SO: autenticación de usuarios, permisos de archivos, protección contra malware y control de acceso a recursos."]}, {"id": 4, "title": "Redes e Internet (Networking and the Internet)", "summary": ["Una red conecta dispositivos para compartir recursos y comunicarse; tipos: LAN (red local), WAN (red amplia), Internet (red de redes).", "Protocolos: reglas que gobiernan la comunicación. El modelo TCP/IP organiza la comunicación en capas (aplicación, transporte, red, enlace).", "IP (Internet Protocol) asigna direcciones únicas a los dispositivos; TCP (Transmission Control Protocol) garantiza la entrega confiable y ordenada de datos.", "DNS (Domain Name System) traduce nombres de dominio legibles (ej. google.com) a direcciones IP numéricas.", "La World Wide Web (WWW) es un sistema de documentos enlazados por hipertexto (HTML) accesibles vía HTTP/HTTPS, distinta de 'Internet' (la infraestructura).", "Seguridad en redes: cifrado (encriptación) para proteger datos en tránsito, firewalls, y amenazas comunes como malware, phishing y ataques DDoS.", "Arquitectura cliente-servidor: el cliente solicita servicios/recursos y el servidor los provee (ej. navegador = cliente, sitio web = servidor)."]}, {"id": 5, "title": "Algoritmos", "summary": ["Un algoritmo es una secuencia finita, precisa y ordenada de pasos para resolver un problema o realizar una tarea.", "Representación de algoritmos: pseudocódigo, diagramas de flujo, o notación estructurada con condicionales (if/else) e iteraciones (while/for).", "Estructuras de control fundamentales: secuencia, selección (decisión) y repetición (bucles) — todo algoritmo se puede construir con estas tres.", "Descubrimiento de algoritmos: estrategias como divide y vencerás, fuerza bruta, y algoritmos voraces (greedy).", "Algoritmos de búsqueda: búsqueda secuencial O(n) vs. búsqueda binaria O(log n) (requiere datos ordenados, divide el espacio de búsqueda a la mitad).", "Algoritmos de ordenamiento: burbuja (bubble sort), inserción, selección (todos O(n²)); mezcla (merge sort) y rápido (quick sort) son más eficientes, O(n log n).", "Eficiencia y complejidad: notación Big O para describir cómo crece el tiempo de ejecución respecto al tamaño de la entrada (O(1), O(log n), O(n), O(n²)).", "No todos los problemas son resolubles algorítmicamente: existen problemas indecidibles (ej. el problema de la parada / halting problem)."]}, {"id": 6, "title": "Lenguajes de Programación", "summary": ["Generaciones de lenguajes: 1ª (lenguaje de máquina), 2ª (ensamblador), 3ª (alto nivel: C, Java), 4ª (muy alto nivel, orientados a dominio específico).", "Paradigmas de programación: procedural/imperativo (C), orientado a objetos (Java, C++), funcional (Haskell, partes de Python/JS), y declarativo/lógico (Prolog, SQL).", "Traducción de código: un compilador traduce todo el programa a lenguaje máquina antes de ejecutarlo; un intérprete traduce y ejecuta línea por línea.", "Conceptos de diseño de lenguajes: tipado (estático vs. dinámico), estructuras de datos incorporadas, manejo de errores/excepciones.", "Programación orientada a objetos (POO): clases, objetos, encapsulamiento, herencia y polimorfismo como pilares fundamentales.", "Sintaxis vs. semántica: la sintaxis son las reglas de escritura del código; la semántica es el significado/comportamiento que produce ese código.", "Variables, tipos de datos, estructuras de control (condicionales, bucles) y funciones/procedimientos son bloques universales en casi todo lenguaje."]}, {"id": 7, "title": "Ingeniería de Software", "summary": ["La Ingeniería de Software aplica principios de ingeniería al desarrollo, operación y mantenimiento de software de forma sistemática y disciplinada.", "Ciclo de vida del software: análisis de requisitos, diseño, implementación (codificación), pruebas (testing), despliegue y mantenimiento.", "Metodologías: modelo en cascada (waterfall, secuencial y rígido) vs. metodologías ágiles (Scrum, Kanban — iterativas y adaptativas).", "Modularidad: dividir un sistema grande en módulos/componentes más pequeños, independientes y reutilizables, facilita el desarrollo y mantenimiento.", "Pruebas de software: pruebas unitarias (una función/módulo), de integración (varios módulos juntos), y de sistema (aplicación completa).", "Documentación: esencial para el mantenimiento futuro; incluye especificaciones de requisitos, diagramas de diseño (ej. UML) y manuales de usuario.", "Gestión de calidad: métricas de software, revisiones de código (code review), control de versiones (ej. Git) para coordinar equipos."]}, {"id": 8, "title": "Abstracción de Datos (Data Abstraction)", "summary": ["Un Tipo de Dato Abstracto (TDA/ADT) define el comportamiento de una estructura (qué operaciones permite) sin especificar cómo se implementa internamente.", "Estructuras de datos lineales: arreglos (array, acceso directo por índice), listas enlazadas (nodos conectados por punteros/referencias).", "Pila (Stack): estructura LIFO (Last In, First Out) — el último elemento agregado es el primero en salir; usada en llamadas a funciones (call stack).", "Cola (Queue): estructura FIFO (First In, First Out) — el primer elemento agregado es el primero en salir; usada en colas de impresión, procesos, etc.", "Árboles: estructura jerárquica no lineal (ej. árbol binario de búsqueda); permite búsquedas eficientes O(log n) si está balanceado.", "Punteros/referencias: variables que almacenan la dirección de memoria de otro dato, permitiendo estructuras dinámicas y enlazadas.", "Compresión de datos revisada en el contexto de estructuras: codificación de Huffman como ejemplo de compresión sin pérdida basada en frecuencia de símbolos."]}, {"id": 9, "title": "Sistemas de Bases de Datos (Database Systems)", "summary": ["Un Sistema Gestor de Base de Datos (DBMS) administra el almacenamiento, la consulta y la seguridad de grandes volúmenes de datos estructurados.", "Modelo relacional: organiza los datos en tablas (relaciones) formadas por filas (registros/tuplas) y columnas (atributos/campos).", "Clave primaria (primary key): identifica de forma única cada registro de una tabla; clave foránea (foreign key): referencia a la clave primaria de otra tabla.", "SQL (Structured Query Language) es el lenguaje estándar para consultar y manipular bases de datos relacionales (SELECT, INSERT, UPDATE, DELETE).", "Normalización: proceso de organizar las tablas para reducir la redundancia de datos y evitar anomalías de actualización (formas normales 1NF, 2NF, 3NF).", "Independencia de datos: separar la estructura lógica de la base de datos de su almacenamiento físico, permitiendo cambios sin afectar las aplicaciones.", "Transacciones y propiedades ACID (Atomicidad, Consistencia, Aislamiento, Durabilidad) garantizan operaciones confiables incluso ante fallos o accesos concurrentes."]}, {"id": 10, "title": "Gráficos por Computadora (Computer Graphics)", "summary": ["Los gráficos por computadora estudian la generación, manipulación y representación visual de imágenes mediante software y hardware.", "Gráficos rasterizados (bitmap): la imagen se compone de una matriz de píxeles, cada uno con un valor de color; se pierde calidad al escalar (pixelación).", "Gráficos vectoriales: la imagen se define mediante fórmulas matemáticas (líneas, curvas, formas); escalable sin pérdida de calidad.", "Modelado 3D: representación de objetos tridimensionales mediante mallas de polígonos (vértices, aristas, caras).", "Renderizado: proceso de convertir un modelo (2D o 3D) en una imagen final, aplicando iluminación, sombras, texturas y perspectiva.", "Animación por computadora: secuencia de imágenes (frames) mostradas rápidamente para crear la ilusión de movimiento; técnicas como interpolación (tweening).", "Aplicaciones: videojuegos, efectos visuales (VFX), realidad virtual/aumentada, diseño asistido por computadora (CAD), visualización de datos."]}, {"id": 11, "title": "Inteligencia Artificial (Artificial Intelligence)", "summary": ["La IA busca crear sistemas capaces de realizar tareas que normalmente requieren inteligencia humana (razonamiento, percepción, aprendizaje, lenguaje).", "Agentes inteligentes: perciben su entorno (sensores/datos), procesan la información y actúan sobre ese entorno para lograr un objetivo.", "Aprendizaje automático (Machine Learning): los sistemas aprenden patrones a partir de datos en lugar de seguir reglas programadas explícitamente.", "Redes neuronales artificiales: inspiradas en el cerebro; capas de 'neuronas' interconectadas que ajustan pesos durante el entrenamiento (base del Deep Learning).", "El perceptrón (1957, Rosenblatt) fue el primer modelo de red neuronal, precursor de las redes neuronales modernas.", "Procesamiento de Lenguaje Natural (NLP): permite a las computadoras entender y generar lenguaje humano (ej. modelos como ChatGPT, lanzado en nov. 2022).", "Visión por computadora, robótica y sistemas expertos son otras subáreas clásicas de la IA con aplicaciones prácticas.", "Consideraciones éticas: sesgos algorítmicos, privacidad de datos, transparencia/explicabilidad y el impacto social del reemplazo de tareas humanas."]}], "flashcards": [{"chapter": 0, "front": "¿Qué estudia la Ciencia de la Computación?", "back": "La representación, el procesamiento y la comunicación de información (no solo el uso de computadoras)."}, {"chapter": 0, "front": "¿Qué es un algoritmo?", "back": "Una secuencia finita, precisa y ordenada de pasos para resolver un problema."}, {"chapter": 0, "front": "¿Qué es abstracción?", "back": "Ocultar detalles innecesarios de un sistema para enfocarse solo en lo esencial."}, {"chapter": 0, "front": "¿En qué año nació el perceptrón?", "back": "En 1957, creado por Frank Rosenblatt, primer modelo de inteligencia artificial."}, {"chapter": 0, "front": "¿Cuándo se lanzó oficialmente ChatGPT?", "back": "El 30 de noviembre de 2022."}, {"chapter": 0, "front": "Complejidad de la búsqueda binaria en una guía telefónica", "back": "O(log n) — el problema se reduce a la mitad en cada paso."}, {"chapter": 1, "front": "¿Qué es un bit?", "back": "La unidad mínima de información digital, puede valer 0 o 1."}, {"chapter": 1, "front": "¿Cuántos bits tiene un byte?", "back": "8 bits."}, {"chapter": 1, "front": "¿Qué es ASCII?", "back": "Un sistema de codificación de caracteres de texto usando 7-8 bits, orientado principalmente al inglés."}, {"chapter": 1, "front": "¿Qué ventaja tiene Unicode sobre ASCII?", "back": "Puede representar caracteres y símbolos de prácticamente todos los idiomas del mundo."}, {"chapter": 1, "front": "¿Qué representa el modelo de color RGB?", "back": "Rojo, Verde y Azul — su combinación en distintas intensidades genera todos los colores en pantalla."}, {"chapter": 1, "front": "¿Qué es una compuerta lógica AND?", "back": "Un circuito que produce salida 1 solo si ambas entradas son 1."}, {"chapter": 1, "front": "¿Diferencia entre memoria RAM y almacenamiento masivo (disco)?", "back": "RAM es volátil y rápida (se borra al apagar); el disco es no volátil y permanente."}, {"chapter": 1, "front": "¿Qué es compresión con pérdida (lossy)?", "back": "Técnica que reduce el tamaño del archivo eliminando información, sacrificando algo de calidad (ej. JPEG)."}, {"chapter": 2, "front": "¿Qué dos partes forman la CPU?", "back": "La Unidad Aritmético-Lógica (ALU) y la Unidad de Control."}, {"chapter": 2, "front": "¿Qué es el ciclo fetch-decode-execute?", "back": "El proceso repetitivo de buscar, decodificar y ejecutar cada instrucción de un programa."}, {"chapter": 2, "front": "¿Qué es un registro en la CPU?", "back": "Una ubicación de memoria muy rápida dentro de la CPU para datos temporales."}, {"chapter": 2, "front": "¿Qué es una interrupción?", "back": "Una señal que pausa temporalmente la ejecución de la CPU para atender un evento urgente."}, {"chapter": 2, "front": "¿Qué es el complemento a dos?", "back": "Un método para representar números negativos en binario."}, {"chapter": 2, "front": "¿Qué es el modelo de von Neumann?", "back": "Arquitectura donde datos e instrucciones comparten la misma memoria."}, {"chapter": 3, "front": "¿Qué es un Sistema Operativo?", "back": "El software que gestiona los recursos del hardware y sirve de puente entre el usuario y la máquina."}, {"chapter": 3, "front": "¿Qué es un proceso?", "back": "Un programa en ejecución, con estados como listo, en ejecución y bloqueado."}, {"chapter": 3, "front": "¿Qué hace el planificador (scheduler)?", "back": "Decide qué proceso usa la CPU en cada momento, dando la ilusión de multitarea."}, {"chapter": 3, "front": "¿Qué es un deadlock (interbloqueo)?", "back": "Situación donde dos o más procesos se bloquean mutuamente esperando recursos que el otro tiene."}, {"chapter": 3, "front": "¿Qué es la memoria virtual?", "back": "Técnica que permite ejecutar programas más grandes que la memoria física disponible, usando el disco como extensión."}, {"chapter": 4, "front": "¿Qué es un protocolo de red?", "back": "Un conjunto de reglas que gobiernan cómo se comunican los dispositivos en una red."}, {"chapter": 4, "front": "¿Qué hace el protocolo TCP?", "back": "Garantiza la entrega confiable y ordenada de los datos entre dispositivos."}, {"chapter": 4, "front": "¿Qué hace el protocolo IP?", "back": "Asigna direcciones únicas a los dispositivos y encamina los paquetes de datos."}, {"chapter": 4, "front": "¿Qué es el DNS?", "back": "El sistema que traduce nombres de dominio (ej. google.com) a direcciones IP."}, {"chapter": 4, "front": "¿Diferencia entre Internet y la World Wide Web?", "back": "Internet es la infraestructura de redes; la Web es un sistema de documentos con hipertexto que corre sobre Internet."}, {"chapter": 4, "front": "¿Qué es la arquitectura cliente-servidor?", "back": "Modelo donde el cliente solicita servicios y el servidor los provee."}, {"chapter": 5, "front": "¿Cuáles son las 3 estructuras de control básicas de todo algoritmo?", "back": "Secuencia, selección (decisión) y repetición (bucle)."}, {"chapter": 5, "front": "¿Diferencia entre búsqueda secuencial y binaria?", "back": "Secuencial revisa uno por uno O(n); binaria divide el espacio a la mitad repetidamente O(log n), requiere datos ordenados."}, {"chapter": 5, "front": "¿Qué es la notación Big O?", "back": "Una forma de describir cómo crece el tiempo de ejecución de un algoritmo según el tamaño de la entrada."}, {"chapter": 5, "front": "¿Qué complejidad tiene el bubble sort (ordenamiento burbuja)?", "back": "O(n²)."}, {"chapter": 5, "front": "¿Qué complejidad tiene el merge sort?", "back": "O(n log n), más eficiente que los algoritmos de ordenamiento cuadráticos."}, {"chapter": 5, "front": "¿Qué es el 'problema de la parada' (halting problem)?", "back": "Un problema clásico que demuestra que existen problemas indecidibles: no se puede escribir un algoritmo general que determine si cualquier programa terminará o no."}, {"chapter": 6, "front": "¿Diferencia entre compilador e intérprete?", "back": "El compilador traduce todo el programa antes de ejecutar; el intérprete traduce y ejecuta línea por línea."}, {"chapter": 6, "front": "¿Qué es la programación orientada a objetos?", "back": "Paradigma basado en clases y objetos, con encapsulamiento, herencia y polimorfismo."}, {"chapter": 6, "front": "¿Qué es un lenguaje de tercera generación?", "back": "Un lenguaje de alto nivel más cercano al lenguaje humano, como C o Java."}, {"chapter": 6, "front": "¿Diferencia entre sintaxis y semántica?", "back": "La sintaxis son las reglas de escritura del código; la semántica es el significado/comportamiento que produce."}, {"chapter": 6, "front": "Ejemplo de lenguaje declarativo", "back": "SQL o Prolog — describen QUÉ se quiere lograr, no CÓMO hacerlo paso a paso."}, {"chapter": 7, "front": "¿Cuáles son las fases del ciclo de vida del software?", "back": "Análisis de requisitos, diseño, implementación, pruebas, despliegue y mantenimiento."}, {"chapter": 7, "front": "¿Diferencia entre modelo waterfall y ágil?", "back": "Waterfall es secuencial y rígido; ágil es iterativo, flexible y adaptativo (ej. Scrum)."}, {"chapter": 7, "front": "¿Qué es la modularidad?", "back": "Dividir un sistema en componentes independientes y reutilizables."}, {"chapter": 7, "front": "¿Qué es una prueba unitaria?", "back": "Prueba que valida el funcionamiento de una función o módulo individual."}, {"chapter": 7, "front": "¿Para qué sirve un sistema de control de versiones como Git?", "back": "Para coordinar cambios de código entre varios desarrolladores y mantener un historial de versiones."}, {"chapter": 8, "front": "¿Qué es un Tipo de Dato Abstracto (TDA)?", "back": "Una definición del comportamiento de una estructura de datos sin especificar su implementación interna."}, {"chapter": 8, "front": "¿Qué significa LIFO (pila/stack)?", "back": "Last In, First Out — el último elemento en entrar es el primero en salir."}, {"chapter": 8, "front": "¿Qué significa FIFO (cola/queue)?", "back": "First In, First Out — el primer elemento en entrar es el primero en salir."}, {"chapter": 8, "front": "¿Qué es un puntero/referencia?", "back": "Una variable que almacena la dirección de memoria de otro dato."}, {"chapter": 8, "front": "¿Qué ventaja tiene un árbol binario de búsqueda balanceado?", "back": "Permite búsquedas en O(log n)."}, {"chapter": 9, "front": "¿Qué es un DBMS?", "back": "Un Sistema Gestor de Base de Datos: software que administra almacenamiento, consulta y seguridad de datos."}, {"chapter": 9, "front": "¿Qué es una clave primaria?", "back": "El atributo que identifica de forma única cada registro de una tabla."}, {"chapter": 9, "front": "¿Qué es una clave foránea?", "back": "Un atributo que referencia la clave primaria de otra tabla, creando relaciones entre tablas."}, {"chapter": 9, "front": "¿Qué es SQL?", "back": "El lenguaje estándar para consultar y manipular bases de datos relacionales."}, {"chapter": 9, "front": "¿Qué es la normalización?", "back": "El proceso de organizar tablas para reducir redundancia y evitar anomalías de datos."}, {"chapter": 9, "front": "¿Qué significa ACID en transacciones?", "back": "Atomicidad, Consistencia, Aislamiento y Durabilidad."}, {"chapter": 10, "front": "¿Diferencia entre gráficos rasterizados y vectoriales?", "back": "Rasterizados usan una matriz de píxeles (pierden calidad al escalar); vectoriales usan fórmulas matemáticas (escalables sin pérdida)."}, {"chapter": 10, "front": "¿Qué es el renderizado?", "back": "El proceso de convertir un modelo en una imagen final aplicando luz, sombras y texturas."}, {"chapter": 10, "front": "¿Qué es un frame en animación?", "back": "Cada una de las imágenes individuales que, mostradas en secuencia rápida, generan la ilusión de movimiento."}, {"chapter": 11, "front": "¿Qué es un agente inteligente?", "back": "Un sistema que percibe su entorno, procesa información y actúa para lograr un objetivo."}, {"chapter": 11, "front": "¿Qué es el aprendizaje automático (Machine Learning)?", "back": "Enfoque donde los sistemas aprenden patrones a partir de datos en vez de reglas programadas explícitamente."}, {"chapter": 11, "front": "¿Qué es una red neuronal artificial?", "back": "Un modelo inspirado en el cerebro, con capas de 'neuronas' interconectadas que ajustan pesos durante el entrenamiento."}, {"chapter": 11, "front": "¿Qué es el NLP (Procesamiento de Lenguaje Natural)?", "back": "El área de la IA que permite a las computadoras entender y generar lenguaje humano."}, {"chapter": 11, "front": "¿Quién creó el perceptrón y en qué año?", "back": "Frank Rosenblatt, en 1957."}], "quiz": [{"chapter": 0, "q": "¿Qué estudia principalmente la Ciencia de la Computación?", "opts": ["Solo el uso de programas ofimáticos", "La representación, procesamiento y comunicación de información", "Únicamente el ensamblaje de hardware", "La reparación de computadoras"], "correct": 1, "exp": "CS es la disciplina que estudia cómo se representa, procesa y comunica la información."}, {"chapter": 0, "q": "¿Qué es un algoritmo?", "opts": ["Un lenguaje de programación", "Una secuencia finita y ordenada de pasos para resolver un problema", "Un tipo de hardware", "Un error de programación"], "correct": 1, "exp": "Un algoritmo es un conjunto finito y preciso de instrucciones para resolver un problema."}, {"chapter": 0, "q": "El 'binomio humano-computador' describe que:", "opts": ["El humano es lento pero inteligente; la computadora es rápida pero no inteligente", "Ambos son igual de inteligentes", "La computadora siempre es más inteligente", "El humano siempre es más rápido"], "correct": 0, "exp": "El ser humano aporta razonamiento; la computadora aporta velocidad (fuerza bruta)."}, {"chapter": 0, "q": "¿En qué año nació el perceptrón, primer modelo de IA?", "opts": ["1943", "1957", "1981", "1993"], "correct": 1, "exp": "El perceptrón fue creado por Frank Rosenblatt en 1957."}, {"chapter": 0, "q": "¿Cuándo fue lanzado oficialmente ChatGPT?", "opts": ["Enero 2025", "30 de noviembre de 2022", "1993", "2018"], "correct": 1, "exp": "ChatGPT se lanzó oficialmente el 30 de noviembre de 2022."}, {"chapter": 0, "q": "¿Qué es 'abstracción' en computación?", "opts": ["Agregar más detalles a un sistema", "Ocultar detalles innecesarios para enfocarse en lo esencial", "Un tipo de error de sintaxis", "Un componente físico de la CPU"], "correct": 1, "exp": "Abstracción significa esconder la complejidad innecesaria y mostrar solo lo relevante."}, {"chapter": 0, "q": "La complejidad de la búsqueda binaria (como en una guía telefónica) es:", "opts": ["O(n)", "O(n²)", "O(log n)", "O(1)"], "correct": 2, "exp": "Al dividir el espacio de búsqueda a la mitad en cada paso, se obtiene complejidad logarítmica."}, {"chapter": 0, "q": "¿Qué sistema operativo compró Bill Gates en 1981 y luego renombró como MS-DOS?", "opts": ["Mosaic", "QDOS", "Linux", "Windows 95"], "correct": 1, "exp": "QDOS (Quick and Dirty Operating System) fue comprado a Tim Paterson y renombrado MS-DOS."}, {"chapter": 1, "q": "¿Cuál es la unidad mínima de información digital?", "opts": ["Byte", "Bit", "Pixel", "Registro"], "correct": 1, "exp": "El bit (0 o 1) es la unidad mínima de información."}, {"chapter": 1, "q": "¿Cuántos bits componen un byte?", "opts": ["4", "8", "16", "2"], "correct": 1, "exp": "Un byte está compuesto por 8 bits."}, {"chapter": 1, "q": "El número binario 1011 equivale en decimal a:", "opts": ["9", "11", "13", "10"], "correct": 1, "exp": "1011 = 1×2³+0×2²+1×2¹+1×2⁰ = 8+0+2+1 = 11."}, {"chapter": 1, "q": "¿Qué sistema de codificación de caracteres soporta la mayoría de idiomas del mundo?", "opts": ["ASCII", "Unicode", "Binario puro", "RGB"], "correct": 1, "exp": "Unicode fue diseñado para representar caracteres de casi todos los idiomas, a diferencia de ASCII (orientado al inglés)."}, {"chapter": 1, "q": "El modelo de color RGB combina:", "opts": ["Rojo, Amarillo, Azul", "Rojo, Verde, Azul", "Negro, Blanco, Gris", "Cian, Magenta, Amarillo"], "correct": 1, "exp": "RGB = Red (rojo), Green (verde), Blue (azul)."}, {"chapter": 1, "q": "Una compuerta lógica AND produce salida 1 cuando:", "opts": ["Al menos una entrada es 1", "Ambas entradas son 1", "Ninguna entrada es 1", "Siempre produce 1"], "correct": 1, "exp": "AND requiere que TODAS sus entradas sean 1 para dar salida 1."}, {"chapter": 1, "q": "¿Cuál es la principal diferencia entre RAM y almacenamiento en disco?", "opts": ["RAM es no volátil, disco es volátil", "RAM es volátil (se borra al apagar), disco es permanente", "Son exactamente iguales", "El disco es más rápido que la RAM"], "correct": 1, "exp": "La RAM pierde su contenido al apagar el equipo; el disco conserva los datos."}, {"chapter": 1, "q": "La compresión JPEG es un ejemplo de compresión:", "opts": ["Sin pérdida (lossless)", "Con pérdida (lossy)", "No es compresión", "Solo para texto"], "correct": 1, "exp": "JPEG sacrifica algo de calidad de imagen para lograr archivos más pequeños (lossy)."}, {"chapter": 1, "q": "¿Qué técnica convierte una onda de sonido analógica en datos digitales?", "opts": ["Compilación", "Muestreo (sampling)", "Renderizado", "Normalización"], "correct": 1, "exp": "El muestreo toma valores de la onda a intervalos regulares para digitalizarla."}, {"chapter": 2, "q": "¿Qué unidad de la CPU realiza operaciones aritméticas y lógicas?", "opts": ["Unidad de Control", "ALU (Unidad Aritmético-Lógica)", "Registro de memoria", "Bus de datos"], "correct": 1, "exp": "La ALU es la encargada de las operaciones matemáticas y lógicas."}, {"chapter": 2, "q": "El ciclo básico de ejecución de instrucciones se llama:", "opts": ["Compilar-enlazar-ejecutar", "Fetch-decode-execute", "Leer-escribir-borrar", "Iniciar-pausar-detener"], "correct": 1, "exp": "Fetch (buscar), decode (decodificar), execute (ejecutar) es el ciclo básico de instrucción."}, {"chapter": 2, "q": "¿Qué es un registro en la CPU?", "opts": ["Un archivo en disco", "Una ubicación de memoria de alta velocidad dentro de la CPU", "Un tipo de red", "Un lenguaje de programación"], "correct": 1, "exp": "Los registros almacenan datos temporales de forma muy rápida dentro de la CPU."}, {"chapter": 2, "q": "¿Qué permite representar números negativos en binario?", "opts": ["ASCII", "Complemento a dos", "RGB", "Unicode"], "correct": 1, "exp": "El complemento a dos es el método estándar para representar enteros negativos."}, {"chapter": 2, "q": "Una interrupción en la CPU sirve para:", "opts": ["Apagar la computadora", "Pausar temporalmente la ejecución para atender un evento urgente", "Borrar la memoria RAM", "Comprimir archivos"], "correct": 1, "exp": "Las interrupciones permiten atender eventos externos (ej. teclado, red) sin bloquear el sistema."}, {"chapter": 2, "q": "En la arquitectura de von Neumann, los datos y las instrucciones:", "opts": ["Están en memorias completamente separadas", "Comparten la misma memoria", "No usan memoria", "Se almacenan solo en la ALU"], "correct": 1, "exp": "El modelo de von Neumann usa una única memoria compartida para datos e instrucciones."}, {"chapter": 2, "q": "El lenguaje de máquina se caracteriza por:", "opts": ["Ser legible fácilmente por humanos", "Ser binario y directamente ejecutable por el hardware", "Ser un lenguaje declarativo", "Necesitar traducción doble"], "correct": 1, "exp": "El lenguaje de máquina son instrucciones binarias que la CPU ejecuta directamente."}, {"chapter": 2, "q": "¿Qué es el 'overflow' (desbordamiento) en operaciones aritméticas?", "opts": ["Un tipo de compresión", "Cuando el resultado excede la capacidad de almacenamiento disponible", "Un protocolo de red", "Un tipo de gráfico vectorial"], "correct": 1, "exp": "El overflow ocurre cuando el resultado de una operación no cabe en el espacio de bits reservado."}, {"chapter": 2, "q": "¿Qué componente permite la comunicación entre la CPU y otros dispositivos?", "opts": ["El bus de datos", "El compilador", "El sistema operativo únicamente", "El navegador web"], "correct": 0, "exp": "El bus de datos transporta información entre la CPU, memoria y periféricos."}, {"chapter": 3, "q": "¿Cuál es la función principal de un Sistema Operativo?", "opts": ["Diseñar páginas web", "Gestionar los recursos de hardware y servir de puente entre usuario y máquina", "Compilar código fuente", "Enviar correos electrónicos"], "correct": 1, "exp": "El SO administra hardware, memoria, procesos y archivos, e intermedia con el usuario."}, {"chapter": 3, "q": "¿Qué es un proceso en un Sistema Operativo?", "opts": ["Un archivo de texto", "Un programa en ejecución", "Un tipo de red", "Una compuerta lógica"], "correct": 1, "exp": "Un proceso es la instancia de un programa que se está ejecutando."}, {"chapter": 3, "q": "¿Cuál de estos NO es un estado típico de un proceso?", "opts": ["Listo (ready)", "En ejecución (running)", "Bloqueado (blocked)", "Comprimido (compressed)"], "correct": 3, "exp": "Los estados típicos son listo, en ejecución, bloqueado y terminado; 'comprimido' no es un estado de proceso."}, {"chapter": 3, "q": "¿Qué hace el planificador (scheduler) del SO?", "opts": ["Decide qué proceso usa la CPU en cada momento", "Diseña la interfaz gráfica", "Traduce código fuente", "Cifra archivos"], "correct": 0, "exp": "El scheduler determina el orden de ejecución de los procesos, dando la ilusión de multitarea."}, {"chapter": 3, "q": "Un interbloqueo (deadlock) ocurre cuando:", "opts": ["Un proceso termina exitosamente", "Dos o más procesos se bloquean mutuamente esperando recursos", "La memoria RAM se libera", "Se apaga el equipo"], "correct": 1, "exp": "El deadlock es un bloqueo circular donde ningún proceso puede continuar."}, {"chapter": 3, "q": "La memoria virtual permite:", "opts": ["Borrar la memoria RAM", "Ejecutar programas más grandes que la memoria física usando el disco", "Aumentar la velocidad del procesador", "Eliminar la necesidad de RAM"], "correct": 1, "exp": "La memoria virtual extiende la capacidad usando espacio en disco como memoria adicional."}, {"chapter": 3, "q": "¿Qué algoritmo de planificación asigna turnos iguales de tiempo a cada proceso?", "opts": ["Round Robin", "Big O", "RGB", "DNS"], "correct": 0, "exp": "Round Robin asigna un 'quantum' de tiempo fijo a cada proceso de forma cíclica."}, {"chapter": 3, "q": "La paginación es una técnica relacionada con:", "opts": ["Gestión de memoria", "Gestión de redes", "Compresión de imágenes", "Diseño de bases de datos"], "correct": 0, "exp": "La paginación divide la memoria en bloques fijos para gestionarla de forma eficiente."}, {"chapter": 3, "q": "¿Qué aspecto de seguridad gestiona un SO?", "opts": ["Autenticación de usuarios y permisos de archivos", "Solo el color de la pantalla", "El diseño de gráficos 3D", "La velocidad de internet"], "correct": 0, "exp": "El SO controla quién puede acceder a qué recursos mediante autenticación y permisos."}, {"chapter": 4, "q": "¿Qué es un protocolo de red?", "opts": ["Un tipo de hardware", "Un conjunto de reglas que gobiernan la comunicación entre dispositivos", "Un lenguaje de programación", "Un tipo de virus informático"], "correct": 1, "exp": "Los protocolos definen cómo se comunican los dispositivos en una red."}, {"chapter": 4, "q": "¿Qué función cumple el protocolo TCP?", "opts": ["Traducir nombres de dominio", "Garantizar la entrega confiable y ordenada de datos", "Renderizar gráficos", "Comprimir archivos"], "correct": 1, "exp": "TCP asegura que los datos lleguen completos, en orden y sin errores."}, {"chapter": 4, "q": "¿Qué función cumple el protocolo IP?", "opts": ["Asignar direcciones únicas y encaminar paquetes", "Cifrar contraseñas", "Ejecutar instrucciones de máquina", "Compilar programas"], "correct": 0, "exp": "IP se encarga del direccionamiento y enrutamiento de los paquetes de datos."}, {"chapter": 4, "q": "¿Qué hace el DNS (Domain Name System)?", "opts": ["Traduce nombres de dominio a direcciones IP", "Cifra el tráfico de red", "Almacena archivos en la nube", "Ejecuta código en el servidor"], "correct": 0, "exp": "El DNS convierte nombres como 'google.com' en direcciones IP numéricas."}, {"chapter": 4, "q": "¿Cuál es la diferencia entre Internet y la World Wide Web?", "opts": ["Son exactamente lo mismo", "Internet es la infraestructura de redes; la Web es un sistema de documentos con hipertexto sobre Internet", "La Web es más antigua que Internet", "Internet solo sirve para correo electrónico"], "correct": 1, "exp": "Internet es la red física/lógica global; la Web es una de las aplicaciones que corre sobre ella."}, {"chapter": 4, "q": "En la arquitectura cliente-servidor, el cliente:", "opts": ["Provee los servicios", "Solicita servicios o recursos", "Nunca se conecta a la red", "Es siempre el servidor"], "correct": 1, "exp": "El cliente hace peticiones; el servidor las atiende y responde."}, {"chapter": 4, "q": "¿Qué tipo de red conecta dispositivos en un área geográfica reducida (ej. una oficina)?", "opts": ["WAN", "LAN", "Internet global", "DNS"], "correct": 1, "exp": "LAN (Local Area Network) cubre un área geográfica pequeña."}, {"chapter": 4, "q": "¿Qué mecanismo protege los datos en tránsito por la red?", "opts": ["Cifrado (encriptación)", "Compresión JPEG", "Renderizado 3D", "Normalización de bases de datos"], "correct": 0, "exp": "El cifrado convierte los datos en un formato ilegible para terceros no autorizados."}, {"chapter": 4, "q": "Un ataque DDoS busca principalmente:", "opts": ["Robar contraseñas mediante phishing", "Saturar un servidor con tráfico para dejarlo inaccesible", "Comprimir archivos maliciosamente", "Traducir direcciones IP"], "correct": 1, "exp": "DDoS (Denial of Service distribuido) satura los recursos de un servidor con tráfico masivo."}, {"chapter": 5, "q": "¿Cuáles son las tres estructuras de control básicas de todo algoritmo?", "opts": ["Secuencia, selección y repetición", "Compilación, enlace y ejecución", "Entrada, proceso y salida de red", "Cliente, servidor y protocolo"], "correct": 0, "exp": "Todo algoritmo puede construirse combinando secuencia, selección (decisión) y repetición (bucle)."}, {"chapter": 5, "q": "¿Qué requisito necesita la búsqueda binaria para funcionar?", "opts": ["Que los datos estén ordenados", "Que los datos sean texto", "Que haya menos de 10 elementos", "No tiene requisitos"], "correct": 0, "exp": "La búsqueda binaria solo funciona correctamente sobre datos previamente ordenados."}, {"chapter": 5, "q": "La complejidad de la búsqueda secuencial (lineal) es:", "opts": ["O(log n)", "O(n)", "O(1)", "O(n log n)"], "correct": 1, "exp": "En el peor caso, la búsqueda secuencial revisa los n elementos uno por uno."}, {"chapter": 5, "q": "¿Qué complejidad tiene el algoritmo bubble sort en el peor caso?", "opts": ["O(n)", "O(log n)", "O(n²)", "O(1)"], "correct": 2, "exp": "Bubble sort compara pares repetidamente, resultando en complejidad cuadrática O(n²)."}, {"chapter": 5, "q": "¿Qué algoritmo de ordenamiento tiene complejidad O(n log n)?", "opts": ["Bubble sort", "Merge sort", "Búsqueda lineal", "Selection sort"], "correct": 1, "exp": "Merge sort (y quick sort en promedio) logran O(n log n), más eficientes que los O(n²)."}, {"chapter": 5, "q": "La estrategia 'divide y vencerás' consiste en:", "opts": ["Resolver el problema completo de una sola vez", "Dividir el problema en subproblemas más pequeños y combinarlos", "Ignorar partes del problema", "Usar solo fuerza bruta"], "correct": 1, "exp": "Divide y vencerás parte el problema en partes menores, las resuelve y combina los resultados."}, {"chapter": 5, "q": "¿Qué describe la notación Big O?", "opts": ["El lenguaje de programación usado", "Cómo crece el tiempo de ejecución según el tamaño de la entrada", "El color de la interfaz", "El tipo de dato de una variable"], "correct": 1, "exp": "Big O expresa el comportamiento asintótico (crecimiento) de un algoritmo."}, {"chapter": 5, "q": "El 'problema de la parada' (halting problem) demuestra que:", "opts": ["Todos los problemas son resolubles con algoritmos", "Existen problemas indecidibles que ningún algoritmo puede resolver en general", "Las computadoras nunca fallan", "Los algoritmos siempre terminan"], "correct": 1, "exp": "Es un ejemplo clásico de problema indecidible en teoría de la computación."}, {"chapter": 5, "q": "Pseudocódigo se utiliza para:", "opts": ["Ejecutar directamente en la CPU", "Representar algoritmos de forma legible sin sintaxis estricta de un lenguaje", "Comprimir archivos", "Diseñar bases de datos"], "correct": 1, "exp": "El pseudocódigo describe la lógica del algoritmo sin atarse a la sintaxis de un lenguaje específico."}, {"chapter": 6, "q": "¿Cuál es la diferencia principal entre compilador e intérprete?", "opts": ["El compilador traduce todo antes de ejecutar; el intérprete traduce y ejecuta línea por línea", "Son exactamente lo mismo", "El intérprete es más rápido siempre", "El compilador no traduce código"], "correct": 0, "exp": "El compilador genera un ejecutable completo; el intérprete procesa el código instrucción por instrucción."}, {"chapter": 6, "q": "¿Qué paradigma se basa en clases, objetos, herencia y polimorfismo?", "opts": ["Programación funcional", "Programación orientada a objetos", "Programación declarativa", "Lenguaje de máquina"], "correct": 1, "exp": "La POO se estructura alrededor de clases y objetos con estos pilares."}, {"chapter": 6, "q": "Un lenguaje de tercera generación (3GL) se caracteriza por:", "opts": ["Ser puramente binario", "Ser de alto nivel y más cercano al lenguaje humano (ej. C, Java)", "No necesitar traducción", "Ser exclusivo para bases de datos"], "correct": 1, "exp": "Los 3GL son lenguajes de alto nivel, más legibles que el ensamblador o el código máquina."}, {"chapter": 6, "q": "¿Cuál es la diferencia entre sintaxis y semántica?", "opts": ["Son sinónimos", "Sintaxis son las reglas de escritura; semántica es el significado/comportamiento", "Semántica es el color del código", "Sintaxis es solo para bases de datos"], "correct": 1, "exp": "La sintaxis define la forma correcta de escribir; la semántica define qué significa/hace el código."}, {"chapter": 6, "q": "SQL es un ejemplo de lenguaje:", "opts": ["Procedural", "Declarativo", "Ensamblador", "De máquina"], "correct": 1, "exp": "SQL describe QUÉ datos se quieren obtener, no el detalle de CÓMO obtenerlos paso a paso."}, {"chapter": 6, "q": "El ensamblador se considera un lenguaje de:", "opts": ["Primera generación", "Segunda generación", "Cuarta generación", "Muy alto nivel"], "correct": 1, "exp": "El lenguaje ensamblador es de 2ª generación, una representación simbólica del lenguaje de máquina."}, {"chapter": 6, "q": "¿Qué determina si un lenguaje es de tipado estático o dinámico?", "opts": ["El color del editor de texto", "Si el tipo de las variables se verifica en tiempo de compilación o en tiempo de ejecución", "La velocidad de internet", "El sistema operativo usado"], "correct": 1, "exp": "Tipado estático verifica tipos al compilar; dinámico los verifica en tiempo de ejecución."}, {"chapter": 6, "q": "En POO, la 'herencia' permite:", "opts": ["Que una clase adquiera atributos y métodos de otra clase", "Comprimir el código fuente", "Traducir el código a binario", "Eliminar variables no usadas"], "correct": 0, "exp": "La herencia permite crear nuevas clases basadas en clases existentes, reutilizando su comportamiento."}, {"chapter": 6, "q": "El polimorfismo en POO permite:", "opts": ["Que un mismo método se comporte de forma diferente según el objeto que lo invoca", "Que el programa no tenga errores", "Comprimir archivos automáticamente", "Ejecutar código más rápido siempre"], "correct": 0, "exp": "El polimorfismo permite que distintas clases respondan de forma distinta a un mismo mensaje/método."}, {"chapter": 7, "q": "¿Cuáles son las fases típicas del ciclo de vida del software?", "opts": ["Análisis, diseño, implementación, pruebas, despliegue y mantenimiento", "Solo diseño y pruebas", "Compilación y ejecución únicamente", "Instalación y desinstalación"], "correct": 0, "exp": "El ciclo de vida abarca desde el análisis de requisitos hasta el mantenimiento posterior."}, {"chapter": 7, "q": "¿Qué caracteriza al modelo en cascada (waterfall)?", "opts": ["Es iterativo y flexible", "Es secuencial y rígido, cada fase se completa antes de pasar a la siguiente", "No tiene fases definidas", "Se usa solo para bases de datos"], "correct": 1, "exp": "Waterfall sigue un orden fijo y lineal de fases, sin retroceder fácilmente."}, {"chapter": 7, "q": "Scrum es un ejemplo de metodología:", "opts": ["En cascada", "Ágil", "No estructurada", "Orientada solo a hardware"], "correct": 1, "exp": "Scrum es una metodología ágil, iterativa e incremental."}, {"chapter": 7, "q": "¿Qué es la modularidad en ingeniería de software?", "opts": ["Escribir todo el código en un solo archivo", "Dividir el sistema en componentes independientes y reutilizables", "Evitar el uso de funciones", "Un tipo de base de datos"], "correct": 1, "exp": "La modularidad facilita el desarrollo, prueba y mantenimiento al separar responsabilidades."}, {"chapter": 7, "q": "Una prueba unitaria evalúa:", "opts": ["El sistema completo", "Una función o módulo individual", "Solo la interfaz gráfica", "La velocidad de la red"], "correct": 1, "exp": "Las pruebas unitarias verifican el correcto funcionamiento de piezas pequeñas de código de forma aislada."}, {"chapter": 7, "q": "¿Para qué sirve un sistema de control de versiones como Git?", "opts": ["Para diseñar interfaces gráficas", "Para coordinar cambios de código entre desarrolladores y mantener historial", "Para comprimir imágenes", "Para cifrar contraseñas"], "correct": 1, "exp": "Git permite rastrear y coordinar cambios en el código fuente entre varios colaboradores."}, {"chapter": 7, "q": "Las pruebas de integración verifican:", "opts": ["Un solo módulo aislado", "Que varios módulos funcionen correctamente en conjunto", "Solo el hardware", "La velocidad del procesador"], "correct": 1, "exp": "Las pruebas de integración comprueban la interacción correcta entre distintos módulos."}, {"chapter": 7, "q": "La documentación de software es importante principalmente para:", "opts": ["Decorar el proyecto", "Facilitar el mantenimiento y comprensión futura del sistema", "Aumentar el tamaño del archivo", "Ralentizar el desarrollo"], "correct": 1, "exp": "La documentación ayuda a que otros desarrolladores (o el mismo autor en el futuro) entiendan el sistema."}, {"chapter": 7, "q": "UML se utiliza principalmente para:", "opts": ["Programar en bajo nivel", "Diagramar y modelar el diseño de un sistema de software", "Comprimir archivos", "Cifrar datos"], "correct": 1, "exp": "UML (Unified Modeling Language) ofrece diagramas estándar para representar el diseño de software."}, {"chapter": 8, "q": "Un Tipo de Dato Abstracto (TDA) define:", "opts": ["Solo el color de una variable", "El comportamiento/operaciones de una estructura, sin especificar su implementación interna", "Un protocolo de red", "Un lenguaje de programación completo"], "correct": 1, "exp": "El TDA se enfoca en QUÉ operaciones ofrece una estructura, no en CÓMO están implementadas."}, {"chapter": 8, "q": "¿Qué significa que una pila (stack) sea LIFO?", "opts": ["First In, First Out", "Last In, First Out", "Last In, Last Out", "Random In, Random Out"], "correct": 1, "exp": "LIFO: el último elemento en entrar es el primero en salir."}, {"chapter": 8, "q": "¿Qué significa que una cola (queue) sea FIFO?", "opts": ["First In, First Out", "Last In, First Out", "First In, Last Out", "No tiene orden"], "correct": 0, "exp": "FIFO: el primer elemento en entrar es el primero en salir."}, {"chapter": 8, "q": "¿Qué estructura de datos es ideal para implementar el 'call stack' de funciones?", "opts": ["Cola (queue)", "Pila (stack)", "Árbol binario", "Tabla hash"], "correct": 1, "exp": "Las llamadas a funciones se apilan y se resuelven en orden LIFO, ideal para una pila."}, {"chapter": 8, "q": "Un puntero (o referencia) almacena:", "opts": ["El valor directo de un dato", "La dirección de memoria de otro dato", "Un color RGB", "Un protocolo de red"], "correct": 1, "exp": "Un puntero contiene la dirección donde se encuentra almacenado otro dato."}, {"chapter": 8, "q": "Un árbol binario de búsqueda balanceado permite búsquedas en:", "opts": ["O(n²)", "O(log n)", "O(n!)", "O(n)"], "correct": 1, "exp": "Al estar balanceado, cada comparación descarta la mitad de los elementos restantes."}, {"chapter": 8, "q": "¿Cuál es la principal diferencia entre un arreglo (array) y una lista enlazada?", "opts": ["El arreglo tiene acceso directo por índice; la lista enlazada usa punteros entre nodos", "Son exactamente iguales", "La lista enlazada siempre es más rápida para todo", "El arreglo no puede almacenar números"], "correct": 0, "exp": "Los arreglos permiten acceso directo por posición; las listas enlazadas conectan nodos mediante referencias."}, {"chapter": 8, "q": "La codificación de Huffman es un ejemplo de:", "opts": ["Un protocolo de red", "Compresión de datos sin pérdida basada en frecuencia de símbolos", "Un lenguaje de programación", "Un tipo de base de datos"], "correct": 1, "exp": "Huffman asigna códigos más cortos a los símbolos más frecuentes, logrando compresión sin pérdida."}, {"chapter": 8, "q": "¿Qué tipo de estructura es jerárquica y no lineal?", "opts": ["Pila", "Cola", "Árbol", "Arreglo"], "correct": 2, "exp": "Los árboles organizan los datos en niveles jerárquicos (nodo raíz, hijos, hojas)."}, {"chapter": 9, "q": "¿Qué es un DBMS?", "opts": ["Un lenguaje de programación", "Un software que administra almacenamiento, consulta y seguridad de datos", "Un tipo de red", "Un algoritmo de ordenamiento"], "correct": 1, "exp": "DBMS = Database Management System, el software gestor de bases de datos."}, {"chapter": 9, "q": "En el modelo relacional, los datos se organizan en:", "opts": ["Árboles jerárquicos", "Tablas con filas y columnas", "Grafos únicamente", "Listas enlazadas"], "correct": 1, "exp": "El modelo relacional usa tablas (relaciones) compuestas de filas (tuplas) y columnas (atributos)."}, {"chapter": 9, "q": "Una clave primaria sirve para:", "opts": ["Cifrar la tabla completa", "Identificar de forma única cada registro de una tabla", "Comprimir los datos", "Definir el color de la interfaz"], "correct": 1, "exp": "La clave primaria garantiza que cada fila sea identificable de manera única."}, {"chapter": 9, "q": "Una clave foránea (foreign key):", "opts": ["No tiene relación con otras tablas", "Referencia la clave primaria de otra tabla, creando una relación", "Es lo mismo que una clave primaria", "Solo existe en bases de datos NoSQL"], "correct": 1, "exp": "Las claves foráneas conectan tablas entre sí, reflejando relaciones del modelo de datos."}, {"chapter": 9, "q": "¿Qué comando SQL se usa para consultar datos?", "opts": ["INSERT", "DELETE", "SELECT", "UPDATE"], "correct": 2, "exp": "SELECT es el comando para recuperar/consultar datos de una o más tablas."}, {"chapter": 9, "q": "La normalización de bases de datos busca:", "opts": ["Aumentar la redundancia de datos", "Reducir la redundancia y evitar anomalías de actualización", "Eliminar todas las tablas", "Comprimir archivos multimedia"], "correct": 1, "exp": "La normalización organiza las tablas para minimizar datos duplicados y errores de actualización."}, {"chapter": 9, "q": "Las propiedades ACID garantizan:", "opts": ["Que las transacciones sean confiables incluso ante fallos o accesos concurrentes", "Que las imágenes se compriman correctamente", "Que la red nunca falle", "Que el código se traduzca más rápido"], "correct": 0, "exp": "ACID = Atomicidad, Consistencia, Aislamiento y Durabilidad, propiedades clave de las transacciones."}, {"chapter": 9, "q": "¿Qué comando SQL elimina registros de una tabla?", "opts": ["SELECT", "DELETE", "CREATE", "JOIN"], "correct": 1, "exp": "DELETE se usa para eliminar filas/registros de una tabla."}, {"chapter": 9, "q": "La independencia de datos permite:", "opts": ["Cambiar el almacenamiento físico sin afectar las aplicaciones que usan la base de datos", "Que los datos nunca cambien", "Eliminar la necesidad de un DBMS", "Que las tablas no tengan relación entre sí"], "correct": 0, "exp": "Separar la estructura lógica de la física permite modificar el almacenamiento sin romper las aplicaciones."}, {"chapter": 10, "q": "¿Qué diferencia a los gráficos vectoriales de los rasterizados?", "opts": ["Los vectoriales usan fórmulas matemáticas y escalan sin pérdida de calidad", "Los vectoriales siempre pesan más", "Son exactamente iguales", "Los rasterizados nunca se pixelan"], "correct": 0, "exp": "Los gráficos vectoriales se definen con matemáticas (curvas/líneas), por lo que pueden escalarse sin perder calidad."}, {"chapter": 10, "q": "Una imagen bitmap está compuesta por:", "opts": ["Fórmulas matemáticas", "Una matriz de píxeles", "Tablas relacionales", "Nodos de un árbol"], "correct": 1, "exp": "Bitmap = matriz de píxeles, cada uno con su propio valor de color."}, {"chapter": 10, "q": "El renderizado es el proceso de:", "opts": ["Comprimir un archivo de texto", "Convertir un modelo en una imagen final aplicando luz, sombra y textura", "Traducir código fuente a binario", "Ordenar una lista de números"], "correct": 1, "exp": "El renderizado genera la imagen final a partir de un modelo 2D/3D."}, {"chapter": 10, "q": "En animación por computadora, un 'frame' es:", "opts": ["Un protocolo de red", "Cada imagen individual de una secuencia que genera la ilusión de movimiento", "Un tipo de base de datos", "Una compuerta lógica"], "correct": 1, "exp": "Los frames mostrados en rápida sucesión crean la sensación de movimiento."}, {"chapter": 10, "q": "El modelado 3D representa objetos mediante:", "opts": ["Mallas de polígonos (vértices, aristas, caras)", "Solo texto plano", "Tablas SQL", "Compuertas lógicas"], "correct": 0, "exp": "Los modelos 3D se construyen con mallas poligonales compuestas de vértices, aristas y caras."}, {"chapter": 10, "q": "¿Cuál es una aplicación típica de los gráficos por computadora?", "opts": ["Compilación de código fuente", "Videojuegos y realidad virtual", "Normalización de bases de datos", "Protocolos de red"], "correct": 1, "exp": "Los gráficos por computadora son fundamentales en videojuegos, VR/AR, CAD, etc."}, {"chapter": 10, "q": "Una desventaja de los gráficos rasterizados frente a los vectoriales es:", "opts": ["Pierden calidad (se pixelan) al escalarlos mucho", "No pueden mostrar colores", "Ocupan menos espacio siempre", "No se pueden editar nunca"], "correct": 0, "exp": "Al ampliar una imagen rasterizada más allá de su resolución original, se pixela."}, {"chapter": 11, "q": "¿Qué es un agente inteligente en IA?", "opts": ["Un tipo de base de datos", "Un sistema que percibe su entorno, procesa información y actúa para lograr un objetivo", "Un protocolo de red", "Un lenguaje de programación"], "correct": 1, "exp": "Los agentes inteligentes perciben, razonan y actúan sobre su entorno."}, {"chapter": 11, "q": "El aprendizaje automático (Machine Learning) se caracteriza por:", "opts": ["Seguir reglas programadas explícitamente siempre", "Aprender patrones a partir de datos en vez de reglas fijas", "No usar datos en absoluto", "Ser lo mismo que un compilador"], "correct": 1, "exp": "ML permite que el sistema 'aprenda' relaciones y patrones directamente de los datos."}, {"chapter": 11, "q": "¿Quién creó el perceptrón y en qué año?", "opts": ["Alan Turing, 1950", "Frank Rosenblatt, 1957", "Bill Gates, 1981", "Marc Andreessen, 1993"], "correct": 1, "exp": "El perceptrón, primer modelo de red neuronal/IA, fue creado por Frank Rosenblatt en 1957."}, {"chapter": 11, "q": "Una red neuronal artificial está inspirada en:", "opts": ["El funcionamiento del cerebro humano", "Las bases de datos relacionales", "Los protocolos de red", "Los sistemas operativos"], "correct": 0, "exp": "Las redes neuronales imitan de forma simplificada la estructura de neuronas interconectadas del cerebro."}, {"chapter": 11, "q": "El Procesamiento de Lenguaje Natural (NLP) permite:", "opts": ["Renderizar gráficos 3D", "Que las computadoras entiendan y generen lenguaje humano", "Comprimir archivos de audio", "Gestionar bases de datos"], "correct": 1, "exp": "NLP es el área de IA enfocada en el entendimiento y generación de texto/lenguaje humano."}, {"chapter": 11, "q": "¿Cuál de estas es una consideración ética relevante en IA?", "opts": ["El color de la interfaz", "Los sesgos algorítmicos y la privacidad de los datos", "La velocidad del procesador", "El tipo de compresión de imagen"], "correct": 1, "exp": "Los sesgos, la privacidad y la transparencia son preocupaciones éticas centrales en IA."}, {"chapter": 11, "q": "¿Qué modelo de IA fue lanzado por la empresa china DeepSeek como modelo de código abierto?", "opts": ["GPT-4", "DeepSeek-V3", "Mosaic", "QDOS"], "correct": 1, "exp": "DeepSeek lanzó DeepSeek-V3 como modelo de código abierto, poco después de otros anuncios importantes en IA en enero 2025."}, {"chapter": 11, "q": "La visión por computadora es una subárea de la IA enfocada en:", "opts": ["Interpretar y analizar imágenes o video", "Gestionar bases de datos relacionales", "Comprimir archivos de texto", "Diseñar redes LAN"], "correct": 0, "exp": "La visión por computadora permite que las máquinas 'entiendan' contenido visual."}, {"chapter": 11, "q": "El Deep Learning se basa principalmente en:", "opts": ["Árboles binarios de búsqueda", "Redes neuronales con múltiples capas", "Bases de datos relacionales", "Protocolos TCP/IP"], "correct": 1, "exp": "El Deep Learning usa redes neuronales profundas (con varias capas ocultas) para aprender representaciones complejas."}]}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('content-data').textContent);
+const chapters = DATA.chapters;
+const flashcards = DATA.flashcards;
+const quizBank = DATA.quiz;
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+/* ---------------- RESUMENES ---------------- */
+const chapNav = document.getElementById('chapter-nav');
+const chapContainer = document.getElementById('chapters-container');
+chapters.forEach((c,i)=>{
+  const navBtn = document.createElement('button');
+  navBtn.textContent = 'Cap ' + c.id;
+  navBtn.dataset.idx = i;
+  if(i===0) navBtn.classList.add('active');
+  navBtn.addEventListener('click', ()=>showChapter(i));
+  chapNav.appendChild(navBtn);
+
+  const card = document.createElement('div');
+  card.className = 'chap-card' + (i===0 ? ' active':'');
+  card.id = 'chap-'+i;
+  card.innerHTML = `<div class="chap-num">CAPÍTULO ${c.id}</div>
+    <h2>${c.title}</h2>
+    <ul>${c.summary.map(s=>`<li>${s}</li>`).join('')}</ul>`;
+  chapContainer.appendChild(card);
+});
+function showChapter(idx){
+  document.querySelectorAll('.chapter-nav button').forEach((b,i)=>b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.chap-card').forEach((c,i)=>c.classList.toggle('active', i===idx));
+}
+
+/* ---------------- FLASHCARDS ---------------- */
+let fcDeck = flashcards.slice();
+let fcIndex = 0;
+const fcChapterSelect = document.getElementById('fc-chapter');
+chapters.forEach(c=>{
+  const opt = document.createElement('option');
+  opt.value = c.id;
+  opt.textContent = 'Cap ' + c.id + ' — ' + c.title;
+  fcChapterSelect.appendChild(opt);
+});
+document.getElementById('fc-total-chip').textContent = flashcards.length;
+
+function renderCard(){
+  const card = fcDeck[fcIndex];
+  document.getElementById('flip-card').classList.remove('flipped');
+  document.getElementById('fc-tag').textContent = 'CAP. ' + card.chapter;
+  document.getElementById('fc-front').textContent = card.front;
+  document.getElementById('fc-back').textContent = card.back;
+  document.getElementById('fc-progress').textContent = `Tarjeta ${fcIndex+1} / ${fcDeck.length}`;
+}
+document.getElementById('flip-card').addEventListener('click', function(){
+  this.classList.toggle('flipped');
+});
+document.getElementById('fc-next').addEventListener('click', ()=>{
+  fcIndex = (fcIndex+1) % fcDeck.length; renderCard();
+});
+document.getElementById('fc-prev').addEventListener('click', ()=>{
+  fcIndex = (fcIndex-1+fcDeck.length) % fcDeck.length; renderCard();
+});
+document.getElementById('fc-shuffle').addEventListener('click', ()=>{
+  fcDeck.sort(()=>Math.random()-0.5); fcIndex=0; renderCard();
+});
+fcChapterSelect.addEventListener('change', function(){
+  fcDeck = this.value==='all' ? flashcards.slice() : flashcards.filter(f=>String(f.chapter)===this.value);
+  fcIndex = 0; renderCard();
+});
+renderCard();
+
+/* ---------------- QUIZ ---------------- */
+let quizSession = [];
+let quizIdx = 0;
+let quizScore = 0;
+let quizAnswered = [];
+
+document.getElementById('quiz-start').addEventListener('click', ()=>{
+  const n = parseInt(document.querySelector('input[name="qcount"]:checked').value);
+  quizSession = quizBank.slice().sort(()=>Math.random()-0.5).slice(0, n);
+  quizIdx = 0; quizScore = 0; quizAnswered = [];
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-result').style.display='none';
+  document.getElementById('quiz-active').style.display='block';
+  renderQuizQuestion();
+});
+
+function renderQuizQuestion(){
+  const q = quizSession[quizIdx];
+  document.getElementById('qz-bar-fill').style.width = ((quizIdx)/quizSession.length*100)+'%';
+  document.getElementById('qz-position').textContent = `Pregunta ${quizIdx+1} / ${quizSession.length}`;
+  document.getElementById('qz-score').textContent = `Aciertos: ${quizScore}`;
+  document.getElementById('qz-chap-tag').textContent = 'CAPÍTULO ' + q.chapter;
+  document.getElementById('qz-question').textContent = q.q;
+  document.getElementById('qz-explain').classList.remove('show');
+  document.getElementById('qz-explain').textContent = '';
+  document.getElementById('qz-next').disabled = true;
+
+  const optsWrap = document.getElementById('qz-options');
+  optsWrap.innerHTML = '';
+  q.opts.forEach((opt, i)=>{
+    const b = document.createElement('button');
+    b.className = 'qz-option';
+    b.textContent = opt;
+    b.addEventListener('click', ()=>selectAnswer(i));
+    optsWrap.appendChild(b);
+  });
+}
+
+function selectAnswer(i){
+  const q = quizSession[quizIdx];
+  const opts = document.querySelectorAll('.qz-option');
+  opts.forEach(o=>o.disabled = true);
+  const correct = i === q.correct;
+  opts[i].classList.add(correct ? 'correct' : 'wrong');
+  if(!correct) opts[q.correct].classList.add('correct');
+  if(correct) quizScore++;
+  quizAnswered.push({q: q.q, chosen: q.opts[i], correctAns: q.opts[q.correct], isCorrect: correct});
+  const exp = document.getElementById('qz-explain');
+  exp.textContent = '💡 ' + q.exp;
+  exp.classList.add('show');
+  document.getElementById('qz-score').textContent = `Aciertos: ${quizScore}`;
+  document.getElementById('qz-next').disabled = false;
+}
+
+document.getElementById('qz-next').addEventListener('click', ()=>{
+  quizIdx++;
+  if(quizIdx >= quizSession.length){
+    finishQuiz();
+  } else {
+    renderQuizQuestion();
+  }
+});
+
+function finishQuiz(){
+  document.getElementById('quiz-active').style.display='none';
+  document.getElementById('quiz-result').style.display='block';
+  const pct = Math.round((quizScore/quizSession.length)*100);
+  document.getElementById('score-big').textContent = pct + '%';
+  document.getElementById('score-detail').textContent = `${quizScore} de ${quizSession.length} correctas`;
+  const reviewList = document.getElementById('review-list');
+  reviewList.innerHTML = quizAnswered.map(a=>`
+    <div class="review-item">
+      <div class="q">${a.q}</div>
+      <div class="ans ${a.isCorrect?'good':'bad'}">Tu respuesta: ${a.chosen}${a.isCorrect?' ✓':' ✗ — correcta: '+a.correctAns}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('quiz-restart').addEventListener('click', ()=>{
+  document.getElementById('quiz-result').style.display='none';
+  document.getElementById('quiz-setup').style.display='block';
+});
+</script>
+</body>
+</html>
